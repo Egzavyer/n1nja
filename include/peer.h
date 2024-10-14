@@ -10,12 +10,15 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <unistd.h>
+#include <pthread.h>
+#include <unordered_map>
 
 class Peer
 {
 public:
-    static void server();
-    static void client();
+    static void *server(void *arg);
+    static void *client(void *arg);
+    static void *connectionHandler(void *arg);
     static void begin(int choice);
 };
 

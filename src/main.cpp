@@ -2,8 +2,9 @@
 
 int main()
 {
+    Peer peer;
     int choice;
     std::cout << "1. Server\n2. Client\n3. Exit\n";
     std::cin >> choice;
-    Peer::begin(choice);
+    peer.begin(choice);
 }
