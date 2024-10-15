@@ -47,14 +47,14 @@ void Peer::runServer()
         {
             throw std::runtime_error("Listen failed");
         }
-        std::cout << "Server Listening On Port " << PORT << "\n";
+        std::cout << "Server Listening On Port " << PORT << std::endl;
 
         if ((newSocket = accept(serverFD, (struct sockaddr *)&address, &addrlen)) < 0)
         {
             throw std::runtime_error("accept: FAILED\n");
         }
 
-        std::cout << "accept " << newSocket << ": SUCCESS\n";
+        std::cout << "accept " << newSocket << ": SUCCESS" << std::endl;
 
         connections[newSocket] = std::thread(&Peer::handleConnection, newSocket);
         for (auto &conn : connections)
@@ -81,6 +81,8 @@ void Peer::runClient(const std::string &serverIP)
         throw std::runtime_error("Socket creation failed");
     }
 
+    std::cout << "socket: SUCCESS\n";
+
     serverAddr.sin_family = AF_INET;
     serverAddr.sin_port = htons(PORT);
     if (inet_pton(AF_INET, serverIP.c_str(), &serverAddr.sin_addr) <= 0)
@@ -88,10 +90,14 @@ void Peer::runClient(const std::string &serverIP)
         throw std::runtime_error("Invalid address");
     }
 
+    std::cout << "Address: VALID\n";
+
     if (connect(sock, (struct sockaddr *)&serverAddr, sizeof(serverAddr)) < 0)
     {
         throw std::runtime_error("Connection failed");
     }
+
+    std::cout << "connect: SUCCESS\n";
 
     std::string msg = "Hello from Client";
     send(sock, msg.c_str(), msg.length(), 0);
