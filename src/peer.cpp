@@ -3,7 +3,7 @@
 constexpr int PORT = 8080;
 constexpr int BUFFER_SIZE = 1024;
 constexpr int MAX_CONN = 3;
-std::unordered_map<pthread_t, int> connections;
+// std::unordered_map<pthread_t, int> connections;
 
 struct arg_struct
 {
@@ -17,14 +17,14 @@ void Peer::begin(int choice)
     if (choice == 1)
     {
         pthread_create(&ptid, NULL, &server, NULL);
-        pthread_join(ptid, NULL);
+        // pthread_join(ptid, NULL);
         std::cout << "Exiting...\n";
         pthread_exit(NULL);
     }
     else if (choice == 2)
     {
         pthread_create(&ptid, NULL, &client, NULL);
-        pthread_join(ptid, NULL);
+        // pthread_join(ptid, NULL);
         std::cout << "Exiting...\n";
         pthread_exit(NULL);
     }
@@ -66,7 +66,7 @@ void *Peer::server(void *arg)
 
     // std::cout << "bind: SUCCESS\n";
 
-    do
+    while (true)
     {
         if (listen(serverFD, MAX_CONN) < 0)
         {
@@ -85,17 +85,22 @@ void *Peer::server(void *arg)
 
         std::cout << "accept " << newSocket << ": SUCCESS\n";
 
-        pthread_t tid;
-        connections[newSocket] = tid;
-        struct arg_struct args;
-        args.connID = newSocket;
-        args.tid = tid;
-        pthread_create(&tid, NULL, &connectionHandler, (void *)&args);
-    } while (!connections.empty());
+        // pthread_t tid;
+        //  connections[newSocket] = tid;
+        // struct arg_struct args;
+        // args.connID = newSocket;
+        //  args.tid = tid;
 
-    for (const auto &conn : connections)
-    {
-        pthread_join(conn.first, NULL);
+        connections[newSocket] = std::thread(&Peer::handleConnection, newSocket);
+        // pthread_create(&tid, NULL, &connectionHandler, (void *)&args);
+        for (auto &conn : connections)
+        {
+            std::cout << conn.first << " : " << conn.second.get_id() << '\n';
+            if (conn.second.joinable())
+            {
+                conn.second.join();
+            }
+        }
     }
 
     close(serverFD);
@@ -136,12 +141,12 @@ void *Peer::client(void *arg)
     std::cout << "Hello Message Sent\n";
     read(sock, buffer, BUFFER_SIZE);
     std::cout << "Received: " << buffer << "\n";
-    sleep(10);
+    // sleep(10);
     close(sock);
     pthread_exit(NULL);
 }
 
-void *Peer::connectionHandler(void *arguments)
+/*void *Peer::connectionHandler(void *arguments)
 {
     struct arg_struct *args = (struct arg_struct *)arguments;
     char buffer[BUFFER_SIZE] = {0};
@@ -150,6 +155,20 @@ void *Peer::connectionHandler(void *arguments)
     send(args->connID, buffer, valread, 0);
     std::cout << "Echo Sent\n";
     close(args->connID);
-    connections.erase(args->connID);
+    // connections.erase(args->connID);
     pthread_exit(NULL);
+}*/
+
+void Peer::handleConnection(int connID)
+{
+    char buffer[BUFFER_SIZE] = {0};
+    ssize_t valRead = read(connID, buffer, BUFFER_SIZE);
+    if (valRead > 0)
+    {
+        std::cout << "Received: " << buffer << "\n";
+        send(connID, buffer, valRead, 0);
+        std::cout << "Echo Sent\n";
+    }
+    close(connID);
+    // connections.erase(connID);
 }

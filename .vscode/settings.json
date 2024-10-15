@@ -1,5 +1,6 @@
 {
     "files.associations": {
+        "*.pyw": "python",
         "array": "cpp",
         "atomic": "cpp",
         "bit": "cpp",
@@ -44,6 +45,11 @@
         "stdexcept": "cpp",
         "streambuf": "cpp",
         "typeinfo": "cpp",
-        "cstring": "cpp"
+        "cstring": "cpp",
+        "ctime": "cpp",
+        "ratio": "cpp",
+        "semaphore": "cpp",
+        "stop_token": "cpp",
+        "thread": "cpp"
     }
 }
