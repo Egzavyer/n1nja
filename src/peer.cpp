@@ -99,7 +99,9 @@ void Peer::runClient(const std::string &serverIP)
 
     std::cout << "connect: SUCCESS\n";
 
-    std::string msg = "Hello from Client";
+    std::string msg;
+    std::cout << "Enter Message: ";
+    std::getline(std::cin, msg);
     send(sock, msg.c_str(), msg.length(), 0);
     std::cout << "Hello Message Sent\n";
 
