@@ -1,25 +1,36 @@
 #include "../include/peer.h"
 
-int main()
+int main(int argc, char *argv[])
 {
+    if (argc < 2)
+    {
+        std::cerr << "Usage: " << argv[0] << " [server|client] [server_ip_for_client]\n";
+        return 1;
+    }
     Peer peer;
-    int choice;
-    std::cout << "1. Server\n2. Client\n3. Exit\n";
-    std::cin >> choice;
+    std::string mode = argv[1];
 
     try
     {
-        if (choice == 1)
+        if (mode == "server")
         {
             std::thread serverThread(&Peer::runServer, &peer);
             std::cout << "Press Enter to stop the server..." << std::endl;
-            // std::cin.get();
-            // peer.stop();
+            std::cin.get();
+            std::cout << "END\n";
+            peer.stop();
             serverThread.join();
         }
-        else if (choice == 2)
+        else if (mode == "client")
         {
-            peer.runClient();
+            if (argc < 3)
+            {
+                peer.runClient("127.0.0.1");
+            }
+            else
+            {
+                peer.runClient(argv[2]);
+            }
         }
         else
         {

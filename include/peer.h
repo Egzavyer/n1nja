@@ -37,7 +37,7 @@ private:
 public:
     void runServer();
     void stop();
-    void runClient();
+    void runClient(const std::string &serverIP);
 };
 
 #endif /* PEER_H */
