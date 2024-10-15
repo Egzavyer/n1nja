@@ -3,14 +3,10 @@
 
 #include <iostream>
 #include <string>
-#include <memory>
 #include <cstring>
-#include <sys/types.h>
 #include <sys/socket.h>
-#include <netinet/in.h>
 #include <arpa/inet.h>
 #include <unistd.h>
-#include <pthread.h>
 #include <thread>
 #include <unordered_map>
 #include <atomic>

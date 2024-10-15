@@ -83,7 +83,6 @@ void Peer::runClient(const std::string &serverIP)
 
     serverAddr.sin_family = AF_INET;
     serverAddr.sin_port = htons(PORT);
-    // TODO be able to input the ip instead of hardcoded 127.0.0.1 localhost
     if (inet_pton(AF_INET, serverIP.c_str(), &serverAddr.sin_addr) <= 0)
     {
         throw std::runtime_error("Invalid address");
