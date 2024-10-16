@@ -12,5 +12,3 @@ COPY . .
 
 EXPOSE 8080
 
-CMD ["./build/src/n1nja server"]
-

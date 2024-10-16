@@ -10,6 +10,7 @@
 #include <thread>
 #include <unordered_map>
 #include <atomic>
+#include <errno.h>
 
 struct socketInfo
 {

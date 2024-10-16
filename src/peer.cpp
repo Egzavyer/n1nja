@@ -10,12 +10,12 @@ socketInfo Peer::createServerSocket()
 
     if ((serverFD = socket(AF_INET, SOCK_STREAM, 0)) == 0)
     {
-        throw std::runtime_error("Socket creation failed");
+        throw std::runtime_error("Socket creation failed: " + std::string(strerror(errno)));
     }
 
     if (setsockopt(serverFD, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT, &opt, sizeof(opt)))
     {
-        throw std::runtime_error("Setsockopt failed");
+        throw std::runtime_error("Setsockopt failed: " + std::string(strerror(errno)));
     }
 
     address.sin_family = AF_INET;
@@ -24,7 +24,7 @@ socketInfo Peer::createServerSocket()
 
     if (bind(serverFD, (struct sockaddr *)&address, sizeof(address)) < 0)
     {
-        throw std::runtime_error("Bind failed");
+        throw std::runtime_error("Bind failed: " + std::string(strerror(errno)));
     }
 
     sock.address = address;
@@ -41,13 +41,17 @@ void Peer::runServer()
     socklen_t addrlen = sock.addrlen;
     int newSocket;
 
+    if (listen(serverFD, MAX_CONN) < 0)
+    {
+        throw std::runtime_error("Listen failed: " + std::string(strerror(errno)));
+    }
+
+    char ip[INET_ADDRSTRLEN];
+    inet_ntop(AF_INET, &(address.sin_addr), ip, INET_ADDRSTRLEN);
+    std::cout << "Server listening on " << ip << ":" << PORT << std::endl;
+
     while (running)
     {
-        if (listen(serverFD, MAX_CONN) < 0)
-        {
-            throw std::runtime_error("Listen failed");
-        }
-        std::cout << "Server Listening On Port " << PORT << std::endl;
 
         if ((newSocket = accept(serverFD, (struct sockaddr *)&address, &addrlen)) < 0)
         {
@@ -57,13 +61,14 @@ void Peer::runServer()
         std::cout << "accept " << newSocket << ": SUCCESS" << std::endl;
 
         connections[newSocket] = std::thread(&Peer::handleConnection, newSocket);
-        for (auto &conn : connections)
+    }
+
+    for (auto &conn : connections)
+    {
+        if (conn.second.joinable())
         {
             std::cout << conn.first << " : " << conn.second.get_id() << '\n';
-            if (conn.second.joinable())
-            {
-                conn.second.join();
-            }
+            conn.second.join();
         }
     }
 
@@ -78,37 +83,37 @@ void Peer::runClient(const std::string &serverIP)
 
     if ((sock = socket(AF_INET, SOCK_STREAM, 0)) < 0)
     {
-        throw std::runtime_error("Socket creation failed");
+        throw std::runtime_error("Socket creation failed: " + std::string(strerror(errno)));
     }
 
-    std::cout << "socket: SUCCESS\n";
+    std::cout << "socket: SUCCESS" << std::endl;
 
     serverAddr.sin_family = AF_INET;
     serverAddr.sin_port = htons(PORT);
     if (inet_pton(AF_INET, serverIP.c_str(), &serverAddr.sin_addr) <= 0)
     {
-        throw std::runtime_error("Invalid address");
+        throw std::runtime_error("Invalid address: " + std::string(strerror(errno)));
     }
 
-    std::cout << "Address: VALID\n";
+    std::cout << "Address: VALID" << std::endl;
 
     if (connect(sock, (struct sockaddr *)&serverAddr, sizeof(serverAddr)) < 0)
     {
-        throw std::runtime_error("Connection failed");
+        throw std::runtime_error("Connection failed: " + std::string(strerror(errno)));
     }
 
-    std::cout << "connect: SUCCESS\n";
+    std::cout << "Connected to server: " << serverIP << ":" << PORT << std::endl;
 
     std::string msg;
     std::cout << "Enter Message: ";
     std::getline(std::cin, msg);
     send(sock, msg.c_str(), msg.length(), 0);
-    std::cout << "Hello Message Sent\n";
+    std::cout << "Message Sent\n";
 
     ssize_t valRead = read(sock, buffer, BUFFER_SIZE);
     if (valRead > 0)
     {
-        std::cout << "Received: " << buffer << "\n";
+        std::cout << "Received: " << buffer << std::endl;
     }
 
     close(sock);
@@ -117,12 +122,22 @@ void Peer::runClient(const std::string &serverIP)
 void Peer::handleConnection(int connID)
 {
     char buffer[BUFFER_SIZE] = {0};
-    ssize_t valRead = read(connID, buffer, BUFFER_SIZE);
-    if (valRead > 0)
+    ssize_t valRead;
+
+    while ((valRead = read(connID, buffer, BUFFER_SIZE)) > 0)
     {
         std::cout << "Received: " << buffer << "\n";
         send(connID, buffer, valRead, 0);
         std::cout << "Echo Sent\n";
+        memset(buffer, 0, BUFFER_SIZE);
+    }
+    if (valRead == 0)
+    {
+        std::cout << "Client disconnected" << std::endl;
+    }
+    else if (valRead < 0)
+    {
+        std::cerr << "Read error: " << strerror(errno) << std::endl;
     }
     close(connID);
 }
