@@ -1,4 +1,5 @@
 #include "../include/peer.h"
+#include "../include/messageParser.h"
 
 socketInfo Peer::createServerSocket()
 {
@@ -53,12 +54,19 @@ void Peer::runServer()
     while (running)
     {
 
+        /*if ((newSocket = accept(serverFD, (struct sockaddr *)&address, &addrlen)) < 0)
+        {
+            throw std::runtime_error("accept: FAILED\n");
+        }*/
+
         if ((newSocket = accept(serverFD, (struct sockaddr *)&address, &addrlen)) < 0)
         {
             throw std::runtime_error("accept: FAILED\n");
         }
 
-        std::cout << "accept " << newSocket << ": SUCCESS" << std::endl;
+        char ip[INET_ADDRSTRLEN];
+        inet_ntop(AF_INET, &(address.sin_addr), ip, INET_ADDRSTRLEN);
+        std::cout << "Accepted connection from " << ip << ":" << PORT << " on socket: " << newSocket << std::endl;
 
         connections[newSocket] = std::thread(&Peer::handleConnection, newSocket);
     }
